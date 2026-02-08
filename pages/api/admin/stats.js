@@ -1,0 +1,1 @@
+import { readJSON } from '../../../lib/storage'; import { requireAdmin } from '../../../lib/auth'; export default function handler(req,res){ const sess=requireAdmin(req,res); if(!sess) return; const clicks=readJSON('clicks.json',{events:[]}); const heat=readJSON('heat.json',{events:[]}); res.status(200).json({ ok:true, clicks, heat }); }

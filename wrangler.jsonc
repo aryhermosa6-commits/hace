@@ -1,0 +1,17 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "main": ".open-next/worker.js",
+
+  // IMPORTANT: Worker name must be unique in your Cloudflare account.
+  // You can rename it later in Cloudflare Dashboard, but keep it in-sync
+  // with this config when deploying.
+  "name": "ponorogo-hardcore",
+
+  "compatibility_date": "2026-02-09",
+  "compatibility_flags": ["nodejs_compat"],
+
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  }
+}
