@@ -1,4 +1,4 @@
-import { readJSON } from "../../lib/storageServer";
+import { readJSON } from "../../lib/storage";
 function esc(s){ return String(s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
 export default function handler(req, res){
   const slug=String(req.query.slug||"");

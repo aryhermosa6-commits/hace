@@ -1,4 +1,4 @@
-import { appendJSONList } from "../../../lib/storageServer";
+import { appendJSONList } from "../../../lib/storage";
 import { ipKey, rateLimit } from "../../../lib/ratelimit";
 export default function handler(req, res){
   if(req.method !== "POST") return res.status(405).json({ ok:false });
