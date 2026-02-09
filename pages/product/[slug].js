@@ -1,194 +1,196 @@
+import { useMemo, useState, useEffect } from "react";
 import Head from "next/head";
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/router";
+import Link from "next/link";
 import HeaderNav from "../../components/HeaderNav";
-import GalleryModal from "../../components/GalleryModal";
-import SizeGuideModal from "../../components/SizeGuideModal";
-import Reveal from "../../components/Reveal";
-import FitFinder from "../../components/FitFinder";
-import BundleBuilder from "../../components/BundleBuilder";
-import WAMessageBuilder from "../../components/WAMessageBuilder";
-import SpecSheet from "../../components/SpecSheet";
+import BottomNav from "../../components/BottomNav";
+import MiniCart from "../../components/MiniCart";
 import QRCodeModal from "../../components/QRCodeModal";
+import SizeGuideModal from "../../components/SizeGuideModal";
+import GalleryModal from "../../components/GalleryModal";
+import FitFinder from "../../components/FitFinder";
+import SpecSheet from "../../components/SpecSheet";
+import WAMessageBuilder from "../../components/WAMessageBuilder";
+import EmailCapture from "../../components/EmailCapture";
+import StatusRibbon from "../../components/StatusRibbon";
+import ScrollProgress from "../../components/ScrollProgress";
+import GrainSlider from "../../components/GrainSlider";
+import HeatTracker from "../../components/HeatTracker";
+import { useRouter } from "next/router";
+import products from "../../data/products.json";
 import { getAB } from "../../lib/ab";
+import { addToWishlist, isInWishlist } from "../../lib/storage";
+import { toast } from "../../lib/toast";
+import { strings } from "../../lib/i18n";
 import { signImageURL } from "../../lib/signedImg";
 import CouponVisual from "../../components/CouponVisual";
 import AutoCaption from "../../components/AutoCaption";
 import BeforeAfterSlider from "../../components/BeforeAfterSlider";
 
+export default function ProductPage({ ctx }){
+  const router = useRouter();
+  const slug = router.query.slug;
+  const p = products.find(x=>x.slug===slug) || products[0];
+  const t = strings[ctx.lang] || strings.id;
+
+  const [variant,setVariant]=useState("A");
+  const [qty,setQty]=useState(1);
+  const [size,setSize]=useState("M");
+  const [color,setColor]=useState("BLACK");
+  const [openQR,setOpenQR]=useState(false);
+  const [openSize,setOpenSize]=useState(false);
+  const [openGallery,setOpenGallery]=useState(false);
+  const [wish,setWish]=useState(false);
+  const [signedImg,setSignedImg]=useState(null);
+
   // detect mobile viewport to simplify heavy components like before/after slider
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const handleResize = () => {
-        setIsMobile(window.innerWidth < 768);
-      };
-      handleResize();
-      window.addEventListener('resize', handleResize);
-      return () => window.removeEventListener('resize', handleResize);
+    if (typeof window !== "undefined") {
+      const check = () => setIsMobile(window.innerWidth < 520);
+      check();
+      window.addEventListener("resize", check);
+      return () => window.removeEventListener("resize", check);
     }
   }, []);
 
-export default function ProductPage({ __ctx }){
-  const ctx=__ctx||{}; const data=ctx.data; const s=data?.settings||{};
-  const router=useRouter(); const slug=String(router.query.slug||"");
-  const p=useMemo(()=>data?.products?.find(x=>x.slug===slug),[data,slug]);
-  const [gal,setGal]=useState(false); const [size,setSize]=useState(false);
-  const [variant,setVariant]=useState("A");
-  const [previewUrl,setPreviewUrl]=useState(null);
-  const [qrOpen, setQrOpen] = useState(false);
-  const [qrUrl, setQrUrl] = useState('');
   useEffect(()=>{ setVariant(getAB()); },[]);
+  useEffect(()=>{
+    setWish(isInWishlist(p?.slug));
+  },[p?.slug]);
 
-  // record recently viewed product slugs in localStorage
-  useEffect(() => {
-    if (!p) return;
-    try {
-      let arr = JSON.parse(localStorage.getItem('phc_recent') || '[]');
-      arr = arr.filter((s) => s !== p.slug);
-      arr.unshift(p.slug);
-      arr = arr.slice(0, 5);
-      localStorage.setItem('phc_recent', JSON.stringify(arr));
-    } catch (e) {}
-  }, [p?.slug]);
-
-  // Sign the first product image to prevent direct download
+  // sign image URL (deterrent only)
   useEffect(()=>{
     let alive=true;
     (async()=>{
-      if(p?.images?.[0]){
-        try{
-          const u=await signImageURL(p.images[0]);
-          if(alive) setPreviewUrl(u);
-        }catch(e){}
+      try{
+        const u=await signImageURL(p.image);
+        if(alive) setSignedImg(u);
+      }catch(e){
+        if(alive) setSignedImg(p.image);
       }
     })();
     return ()=>{alive=false};
-  },[p?.images]);
+  },[p?.image]);
 
-  // Capture the current URL for QR code once on mount
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setQrUrl(window.location.href);
-    }
-  }, []);
+  const price = useMemo(()=>{
+    const base = p.price;
+    const mult = size==="XXL" ? 1.1 : size==="XL" ? 1.05 : 1;
+    return Math.round(base*mult);
+  },[p,size]);
 
-  if(!data) return <div className="container"><div className="card cardPad">Loading…</div></div>;
-  if(!p) return <div className="container"><div className="card cardPad">Not found.</div></div>;
-
-  const title=ctx.lang==="en"?p.title_en:p.title_id;
-  const desc=ctx.lang==="en"?p.desc_en:p.desc_id;
+  function addWish(){
+    addToWishlist(p.slug);
+    setWish(true);
+    toast("Added to wishlist");
+  }
 
   return (
-    <>
-      <Head>
-        <title>{title} — Ponorogo Hardcore</title>
-        <meta name="description" content={desc} />
-        <meta property="og:title" content={title} />
-        <meta property="og:description" content={desc} />
-        <meta property="og:image" content={`/api/og?slug=${encodeURIComponent(slug)}`} />
-      </Head>
+    <div className="wrap">
+      <Head><title>{p.title} — Ponorogo Hardcore</title></Head>
 
-      <HeaderNav ctx={ctx} />
-
+      <ScrollProgress/>
+      <HeaderNav ctx={ctx}/>
       <div className="container">
-        <Reveal>
-          <div className="grid" style={{gridTemplateColumns:"repeat(auto-fit,minmax(320px,1fr))"}}>
-            <div className="card cardPad">
-              <div className="h2" style={{marginTop:0}}>{title}</div>
-              <p className="p">{desc}</p>
-              <div className="row" style={{marginTop:10}}>
-                <div className="badge">{String(p.status||"PO").toUpperCase()}</div>
-                <div className="badge">{p.batch}</div>
-                <div className="badge">Rp {Number(p.price||0).toLocaleString("id-ID")}</div>
+        <StatusRibbon ctx={ctx}/>
+        <HeatTracker product={p.slug}/>
+        <GrainSlider/>
+
+        <div className="card" style={{marginTop:16}}>
+          <div className="row" style={{justifyContent:"space-between"}}>
+            <h1 style={{margin:0}}>{p.title}</h1>
+            <span className="pill">{p.dropTag || "DROP"}</span>
+          </div>
+          <div className="row" style={{marginTop:8, gap:10, flexWrap:"wrap"}}>
+            <span className="pill">Rp {price.toLocaleString("id-ID")}</span>
+            <span className="pill">{p.type}</span>
+            <span className="pill">{p.stockNote || "Ready"}</span>
+          </div>
+
+          <div className="grid2" style={{marginTop:14}}>
+            <div>
+              <div className="imgbox" onClick={()=>setOpenGallery(true)} style={{cursor:"pointer"}}>
+                <img src={signedImg || p.image} alt={p.title}/>
+              </div>
+              <div className="row" style={{marginTop:10, gap:10, flexWrap:"wrap"}}>
+                <button className="btn" onClick={()=>setOpenGallery(true)}>{t.view_gallery || "Gallery"}</button>
+                <button className="btn" onClick={()=>setOpenSize(true)}>{t.size_guide || "Size Guide"}</button>
+                <button className="btn" onClick={()=>setOpenQR(true)}>QR</button>
+                <button className="btn" onClick={()=> addWish()} disabled={wish}>{wish? "WISHLISTED":"WISHLIST"}</button>
+              </div>
+            </div>
+
+            <div>
+              <p className="muted" style={{marginTop:0}}>{p.desc}</p>
+
+              <div className="row" style={{gap:10, flexWrap:"wrap"}}>
+                <div style={{minWidth:140}}>
+                  <div className="small">{t.size || "Size"}</div>
+                  <select className="input" value={size} onChange={e=>setSize(e.target.value)}>
+                    {(p.sizes||["S","M","L","XL","XXL"]).map(s=><option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+
+                <div style={{minWidth:160}}>
+                  <div className="small">{t.color || "Color"}</div>
+                  <select className="input" value={color} onChange={e=>setColor(e.target.value)}>
+                    {(p.colors||["BLACK"]).map(c=><option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+
+                <div style={{minWidth:120}}>
+                  <div className="small">{t.qty || "Qty"}</div>
+                  <div className="row" style={{gap:8}}>
+                    <button className="btn" onClick={()=>setQty(q=>Math.max(1,q-1))}>-</button>
+                    <div className="pill" style={{minWidth:46,textAlign:"center"}}>{qty}</div>
+                    <button className="btn" onClick={()=>setQty(q=>q+1)}>+</button>
+                  </div>
+                </div>
               </div>
 
-              {p.priceHistory && p.priceHistory.length > 0 && (
-                <div className="small" style={{ marginTop: 6 }}>
-                  Riwayat harga: {p.priceHistory.map((ph) => `${new Date(ph.date).toLocaleDateString('id-ID')}: Rp ${Number(ph.price).toLocaleString('id-ID')}`).join(' | ')}
+              <div style={{marginTop:14}}>
+                <WAMessageBuilder product={p} qty={qty} size={size} color={color} />
+              </div>
+
+              <div style={{marginTop:14}}>
+                <FitFinder product={p}/>
+              </div>
+
+              <div style={{marginTop:14}}>
+                <SpecSheet product={p}/>
+              </div>
+
+              <div style={{marginTop:14}}>
+                <CouponVisual ctx={ctx}/>
+              </div>
+
+              <div style={{marginTop:14}}>
+                <AutoCaption product={p}/>
+              </div>
+
+              {!isMobile && (
+                <div style={{marginTop:14}}>
+                  <BeforeAfterSlider/>
                 </div>
               )}
-              <SpecSheet type={p.type} specs={p.specs} />
 
-              <div className="row" style={{marginTop:12}}>
-                <button className="btn primary" onClick={()=>setGal(true)}>OPEN GALLERY</button>
-                <button className="btn" onClick={()=>setSize(true)}>SIZE GUIDE</button>
-              </div>
-              <div className="small" style={{marginTop:12}}>OG preview aktif: share link produk → pakai OG image server-side (/api/og).</div>
-            </div>
-
-            <div className="card" style={{overflow:"hidden"}}>
-              <div className="imgGuard" onContextMenu={(e)=>e.preventDefault()} onDragStart={(e)=>e.preventDefault()}>
-                <img src={previewUrl || p.images?.[0]} alt={title} style={{width:"100%",height:420,objectFit:"cover"}} />
-              </div>
-              <div className="cardPad" style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <div className="small">Preview (gallery pakai signed url)</div>
-                <button className="btn small" onClick={()=>setGal(true)}>FULLSCREEN</button>
+              <div style={{marginTop:14}}>
+                <EmailCapture ctx={ctx}/>
               </div>
             </div>
           </div>
-        </Reveal>
 
-        <div style={{height:16}} />
-        <Reveal><FitFinder chart={p.sizeChart} /></Reveal>
-
-        {/* Before/After comparison: on mobile, show images stacked; on larger screens, use slider */}
-        <div style={{ height: 16 }} />
-        <Reveal>
-          {p.images && p.images.length > 1 && (
-            <div className="card cardPad">
-              <div className="h2" style={{ marginBottom: 8, fontSize: 18 }}>Before vs After</div>
-              {isMobile ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <img src={p.images[0]} alt="Before" style={{ width: '100%', height: 240, objectFit: 'cover', borderRadius: 8 }} />
-                  <img src={p.images[1]} alt="After" style={{ width: '100%', height: 240, objectFit: 'cover', borderRadius: 8 }} />
-                </div>
-              ) : (
-                <>
-                  <BeforeAfterSlider before={p.images[0]} after={p.images[1]} />
-                  <div className="small" style={{ marginTop: 8 }}>Geser untuk melihat perbedaan.</div>
-                </>
-              )}
-            </div>
-          )}
-        </Reveal>
-
-        <div style={{height:16}} />
-        <Reveal><BundleBuilder waNumber={s.waNumber} products={data.products} discount={s.bundleDiscount||10000} lang={ctx.lang} variant={variant} /></Reveal>
-
-        <div style={{height:16}} />
-        <Reveal><WAMessageBuilder waNumber={s.waNumber} products={[p]} lang={ctx.lang} variant={variant} /></Reveal>
-
-        {/* Coupon code and auto caption */}
-        <div style={{ height: 16 }} />
-        <Reveal>
-          <CouponVisual code={p.coupon || data?.settings?.coupon} />
-          <AutoCaption product={p} />
-        </Reveal>
-
-        {/* Short link */}
-        <div style={{ height: 16 }} />
-        <Reveal>
-          <div className="card cardPad" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div className="label">Short Link</div>
-            <div className="row" style={{ gap: 8 }}>
-              <input className="input" value={`https://phc.one/${p.slug}`} readOnly />
-              <button className="btn small" onClick={() => { try { navigator.clipboard.writeText(`https://phc.one/${p.slug}`); alert('Short link copied'); } catch(e) {} }}>COPY</button>
-            </div>
+          <div className="row" style={{justifyContent:"space-between",marginTop:14}}>
+            <Link className="btn" href="/products">← {t.back || "Back"}</Link>
+            <MiniCart/>
           </div>
-        </Reveal>
-
-        <div style={{ height: 16 }} />
-        <Reveal>
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <button className="btn" onClick={() => setQrOpen(true)}>SHOW QR</button>
-          </div>
-        </Reveal>
+        </div>
       </div>
 
-      <GalleryModal open={gal} onClose={()=>setGal(false)} title={title} images={p.images||[]} watermarkText={""} />
-      <SizeGuideModal open={size} onClose={()=>setSize(false)} chart={p.sizeChart||[]} />
-      <QRCodeModal open={qrOpen} onClose={()=>setQrOpen(false)} text={qrUrl} />
-    </>
+      <BottomNav/>
+
+      {openQR && <QRCodeModal onClose={()=>setOpenQR(false)} url={(typeof window!=="undefined"?window.location.href:"")}/>}
+      {openSize && <SizeGuideModal onClose={()=>setOpenSize(false)}/>}
+      {openGallery && <GalleryModal onClose={()=>setOpenGallery(false)} images={[p.image,...(p.gallery||[])]}/>}
+    </div>
   );
 }
