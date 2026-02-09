@@ -44,11 +44,28 @@ export default function App({ Component, pageProps }){
   const [theme, setTheme] = useState("VHS");
   const [rage, setRage] = useState(false);
   const [routeChanging, setRouteChanging] = useState(false);
+  // ref to store a fallback timer for the route overlay. If the route
+  // never finishes for some reason (e.g. an unhandled error), this
+  // timer will automatically clear the overlay after a short delay.
+  const overlayTimerRef = useRef();
 
   // additional UI modes
   const [contrastLock, setContrastLock] = useState(false);
   const [oneHand, setOneHand] = useState(false);
   const [focus, setFocus] = useState(false);
+
+  // detect if we are on a small/mobile screen. We set this only on client.
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const handleResize = () => {
+        setIsMobile(window.innerWidth < 768);
+      };
+      handleResize();
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }
+  }, []);
 
   useEffect(()=>{ (async()=>{ try{ setData(await fetchProducts()); }catch(e){} })(); },[]);
   useEffect(()=>{ const t=setTimeout(()=>setBoot(false),2200); return ()=>clearTimeout(t); },[]);
@@ -71,10 +88,18 @@ export default function App({ Component, pageProps }){
   }, [focus]);
   useKeySequence("hc", ()=> setRage(r=>!r));
 
-  // route change animation
+  // route change animation with fallback: show overlay on start, hide it on
+  // complete/error, and auto-hide after a timeout in case no event fires.
   useEffect(() => {
-    const handleStart = () => setRouteChanging(true);
-    const handleComplete = () => setTimeout(() => setRouteChanging(false), 300);
+    const handleStart = () => {
+      setRouteChanging(true);
+      if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current);
+      overlayTimerRef.current = setTimeout(() => setRouteChanging(false), 1200);
+    };
+    const handleComplete = () => {
+      if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current);
+      setRouteChanging(false);
+    };
     router.events.on('routeChangeStart', handleStart);
     router.events.on('routeChangeComplete', handleComplete);
     router.events.on('routeChangeError', handleComplete);
@@ -82,6 +107,7 @@ export default function App({ Component, pageProps }){
       router.events.off('routeChangeStart', handleStart);
       router.events.off('routeChangeComplete', handleComplete);
       router.events.off('routeChangeError', handleComplete);
+      if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current);
     };
   }, [router]);
 
@@ -123,21 +149,23 @@ export default function App({ Component, pageProps }){
 
       <ToastProvider>
         {/* Scroll progress bar */}
-        <ScrollProgress />
+        {!isMobile && <ScrollProgress />}
         {/* PO status ribbon */}
         <StatusRibbon status={ribbonStatus} closeAtISO={closeAtISO} />
 
-        <div className="noise" />
-        <div className="scanlines" />
-        {/* Stage lights overlay */}
-        <StageLights />
+        {/* base noise & scanline effects remain as backgrounds, but disable on small/mobile screens to improve performance */}
+        {!isMobile && <div className="noise" />}
+        {!isMobile && <div className="scanlines" />}
+        {/* Stage lights overlay (disabled on small screens to improve performance) */}
+        {!isMobile && <StageLights />}
 
-        <CustomCursor enabled={true} />
+        <CustomCursor enabled={!isMobile} />
         <HeatTracker />
-        {/* ambient crowd flash overlay */}
-        <AmbientFlash />
+        {/* ambient crowd flash overlay (disabled on mobile) */}
+        {!isMobile && <AmbientFlash />}
 
-        {boot && <BootScreen brand={data?.settings?.brand || "PONOROGO HARDCORE"} />}
+        {/* Boot screen: reduce duration and disable completely on small screens */}
+        {boot && !isMobile && <BootScreen brand={data?.settings?.brand || "PONOROGO HARDCORE"} />}
 
         {ctx?.rage && (
           <div className="rageBanner">
@@ -145,23 +173,14 @@ export default function App({ Component, pageProps }){
           </div>
         )}
 
-        <div style={{ position:"fixed", right:12, top:12, zIndex:1500, display:"flex", gap:10, alignItems:"center", flexWrap:"wrap" }}>
-          <AudioNoiseToggle />
-          {/* audio visualizer next to noise toggle */}
-          <AudioVisualizer />
-          {/* contrast lock toggle */}
-          <button className="btn small" onClick={() => setContrastLock((v) => !v)}>
-            {contrastLock ? 'Contrast OFF' : 'Contrast ON'}
-          </button>
-          {/* one-hand mode toggle */}
-          <button className="btn small" onClick={() => setOneHand((v) => !v)}>
-            {oneHand ? 'One-hand OFF' : 'One-hand ON'}
-          </button>
-          {/* focus product mode toggle */}
-          <button className="btn small" onClick={() => setFocus((v) => !v)}>
-            {focus ? 'Focus OFF' : 'Focus ON'}
-          </button>
-        </div>
+        {/*
+          The quick toggles for noise, visualizer and display modes have been
+          relocated to a dedicated settings page (`/settings`). Removing
+          this fixed container keeps the UI uncluttered, particularly on
+          mobile devices. The classes themselves (contrastLock, oneHand,
+          focusProduct) will still take effect if toggled on the
+          settings page because they are applied on `document.body`.
+        */}
 
         <Component {...pageProps} __ctx={ctx} />
 
@@ -171,14 +190,14 @@ export default function App({ Component, pageProps }){
         {/* bottom nav for mobile */}
         <BottomNav waNumber={data?.settings?.waNumber} />
 
-        {/* grain slider control (bottom right) */}
-        <GrainSlider />
+        {/* grain slider control (bottom right) disabled on mobile */}
+        {!isMobile && <GrainSlider />}
 
-        {/* product comparison drawer toggle */}
-        <ProductComparisonDrawer />
+        {/* product comparison drawer toggle: disabled on mobile to avoid clutter */}
+        {!isMobile && <ProductComparisonDrawer />}
 
-        {/* marquee tape across bottom to separate footer */}
-        <MarqueeTape>Ponorogo Hardcore • No gods No masters • Support your local scene • </MarqueeTape>
+        {/* marquee tape across bottom to separate footer (disabled on mobile) */}
+        {!isMobile && <MarqueeTape>Ponorogo Hardcore • No gods No masters • Support your local scene • </MarqueeTape>}
 
         {/* route change overlay */}
         {routeChanging && <div className="routeOverlay" />}

@@ -8,6 +8,19 @@ export default function ProductCard({ p, lang="id", onOpenGallery }){
   const [flip,setFlip]=useState(0);
   // favourite state
   const [fav, setFav] = useState(false);
+
+  // detect mobile screen to disable heavy tilt and flip interactions
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const handleResize = () => {
+        setIsMobile(window.innerWidth < 768);
+      };
+      handleResize();
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }
+  }, []);
   const cardRef=useRef(null);
   const drag=useRef({ on:false,x0:0,v0:0 });
   const title=lang==="en"?p.title_en:p.title_id;
@@ -63,6 +76,7 @@ export default function ProductCard({ p, lang="id", onOpenGallery }){
   };
 
   const onMouseMove=(e)=>{
+    if (isMobile) return;
     const el=cardRef.current; if(!el) return;
     const r=el.getBoundingClientRect();
     const mx=((e.clientX-r.left)/r.width)*100, my=((e.clientY-r.top)/r.height)*100;
@@ -73,9 +87,23 @@ export default function ProductCard({ p, lang="id", onOpenGallery }){
   };
   const onLeave=()=>{ const el=cardRef.current; if(!el) return; el.style.setProperty("--ry","0deg"); el.style.setProperty("--rx","0deg"); el.style.setProperty("--mx","50%"); el.style.setProperty("--my","50%"); };
 
-  const onPointerDown=(e)=>{ drag.current={on:true,x0:e.clientX,v0:flip}; (e.target?.setPointerCapture?.(e.pointerId))?.(); };
-  const onPointerMove=(e)=>{ if(!drag.current.on) return; const dx=e.clientX-drag.current.x0; const v=Math.min(180, Math.max(0, drag.current.v0 + dx*0.45)); setFlip(v); };
-  const onPointerUp=()=>{ drag.current.on=false; setFlip(prev=> prev>90?180:0); };
+  const onPointerDown = (e) => {
+    if (isMobile) return;
+    drag.current = { on: true, x0: e.clientX, v0: flip };
+    (e.target?.setPointerCapture?.(e.pointerId))?.();
+  };
+  const onPointerMove = (e) => {
+    if (isMobile) return;
+    if (!drag.current.on) return;
+    const dx = e.clientX - drag.current.x0;
+    const v = Math.min(180, Math.max(0, drag.current.v0 + dx * 0.45));
+    setFlip(v);
+  };
+  const onPointerUp = () => {
+    if (isMobile) return;
+    drag.current.on = false;
+    setFlip(prev => (prev > 90 ? 180 : 0));
+  };
 
   return (
     <div ref={cardRef} className="card cardDamage" style={{position:"relative",overflow:"hidden"}} onMouseMove={onMouseMove} onMouseLeave={onLeave}>
@@ -95,13 +123,35 @@ export default function ProductCard({ p, lang="id", onOpenGallery }){
           <div className="badge">{p.batch||"DROP"}</div>
         </div>
 
-        <div style={{marginTop:12,position:"relative",borderRadius:16,border:"1px solid rgba(255,255,255,.12)",overflow:"hidden"}}
-          onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}>
-          <div className="imgGuard" onContextMenu={(e)=>e.preventDefault()} onDragStart={(e)=>e.preventDefault()}>
-            <div style={{transformStyle:"preserve-3d",transform:`perspective(1100px) rotateY(${flip}deg)`,transition: drag.current.on?"none":"transform .22s ease"}}>
-              <div style={{backfaceVisibility:"hidden"}}><img src={imgFront} alt={title} style={{width:"100%",height:260,objectFit:"cover"}}/></div>
-              <div style={{position:"absolute",inset:0,transform:"rotateY(180deg)",backfaceVisibility:"hidden"}}><img src={imgBack} alt="" style={{width:"100%",height:260,objectFit:"cover"}}/></div>
-            </div>
+        <div
+          style={{ marginTop: 12, position: "relative", borderRadius: 16, border: "1px solid rgba(255,255,255,.12)", overflow: "hidden" }}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
+        >
+          <div className="imgGuard" onContextMenu={(e) => e.preventDefault()} onDragStart={(e) => e.preventDefault()}>
+            {/* For mobile devices, disable the 3D flip and show only the front image. On larger screens, keep the flip effect. */}
+            {isMobile ? (
+              <img src={imgFront} alt={title} style={{ width: "100%", height: 260, objectFit: "cover" }} />
+            ) : (
+              <div
+                style={{
+                  transformStyle: "preserve-3d",
+                  transform: `perspective(1100px) rotateY(${flip}deg)`,
+                  transition: drag.current.on ? "none" : "transform .22s ease",
+                }}
+              >
+                <div style={{ backfaceVisibility: "hidden" }}>
+                  <img src={imgFront} alt={title} style={{ width: "100%", height: 260, objectFit: "cover" }} />
+                </div>
+                <div
+                  style={{ position: "absolute", inset: 0, transform: "rotateY(180deg)", backfaceVisibility: "hidden" }}
+                >
+                  <img src={imgBack} alt="" style={{ width: "100%", height: 260, objectFit: "cover" }} />
+                </div>
+              </div>
+            )}
           </div>
           <div className="sweep" />
           {/* Sticker label overlay */}

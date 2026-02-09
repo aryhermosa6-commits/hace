@@ -3,7 +3,9 @@
   --line:rgba(242,242,242,.12); --accent:#b8ff00; --danger:#ff1744;
   --card:rgba(255,255,255,.04); --shadow: 0 12px 40px rgba(0,0,0,.55);
   /* Controls opacity of noise overlay; adjustable via GrainSlider component */
-  --noiseOpacity:.08;
+  /* Default noise opacity lowered for better performance. Users can still increase via GrainSlider. */
+  /* Lower the default noise opacity to make the texture lighter */
+  --noiseOpacity:.03;
   --radius:16px; --mono: ui-monospace, Menlo, Monaco, Consolas, "Courier New", monospace;
   --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
 }
@@ -118,7 +120,8 @@ hr{border:0;border-top:1px solid var(--line);margin:24px 0;}
 }
 .glitch.glitching:before,.glitch.glitching:after{animation: glitchClip .8s steps(2,end) infinite;}
 
-.scanlines{position:fixed;inset:0;pointer-events:none;z-index:10;background: repeating-linear-gradient(to bottom,rgba(255,255,255,.03) 0px,rgba(255,255,255,.03) 1px,rgba(0,0,0,0) 2px,rgba(0,0,0,0) 6px);opacity:.35;}
+/* Lighter scanline overlay: reduce opacity to minimise visual weight */
+.scanlines{position:fixed;inset:0;pointer-events:none;z-index:10;background: repeating-linear-gradient(to bottom,rgba(255,255,255,.02) 0px,rgba(255,255,255,.02) 1px,rgba(0,0,0,0) 2px,rgba(0,0,0,0) 6px);opacity:.1;}
 .noise{position:fixed;inset:-40px;pointer-events:none;z-index:9;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E");mix-blend-mode:overlay;opacity:var(--noiseOpacity,.08);animation: noiseMove 8s linear infinite;}
 @keyframes noiseMove{0%{transform:translate(0,0);}25%{transform:translate(-12px,8px);}50%{transform:translate(14px,-10px);}75%{transform:translate(10px,14px);}100%{transform:translate(0,0);}}
 
@@ -168,9 +171,10 @@ body.theme-CLEAN{--accent:#ffffff;}
   inset: 0;
   pointer-events: none;
   z-index: 5;
-  background: radial-gradient(circle at 10% 20%, rgba(184,255,0,.09), transparent 60%),
-              radial-gradient(circle at 80% 70%, rgba(255,23,68,.07), transparent 60%);
-  animation: stageSweep 12s linear infinite;
+  /* Soften stage lights on all screens: reduce opacity and slow the sweep. */
+  background: radial-gradient(circle at 10% 20%, rgba(184,255,0,.05), transparent 60%),
+              radial-gradient(circle at 80% 70%, rgba(255,23,68,.04), transparent 60%);
+  animation: stageSweep 20s linear infinite;
   mix-blend-mode: screen;
 }
 @keyframes stageSweep {
@@ -193,11 +197,23 @@ body.theme-CLEAN{--accent:#ffffff;}
   backdrop-filter: blur(6px);
   z-index: 1000;
 }
+/* Bottom nav items are now icons without text. Use flex to center the SVG. */
 .bottomNav a {
   color: var(--accent);
-  font-weight: 600;
-  font-size: 14px;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-decoration: none;
+  font-size: 0;
+}
+/* ensure svg icons inherit currentColor */
+.bottomNav a svg {
+  width: 24px;
+  height: 24px;
+  display: block;
+  fill: currentColor;
 }
 
 /* Mini cart summary bar. It floats above the bottom nav when items are in cart */
@@ -483,7 +499,10 @@ body.theme-CLEAN{--accent:#ffffff;}
 .routeOverlay {
   position: fixed;
   inset: 0;
-  background: #070709;
+  /* Use semi-transparent background for route transition overlay so underlying
+     content is still faintly visible. Previously this was opaque black,
+     which caused a "black screen" effect if the overlay didn't clear. */
+  background: rgba(7, 7, 9, 0.6);
   animation: glitchFade 0.4s ease-in-out;
   z-index: 1500;
   pointer-events: none;
@@ -542,8 +561,9 @@ body.theme-CLEAN{--accent:#ffffff;}
 /* Comparison drawer */
 .compareToggle {
   position: fixed;
-  bottom: 120px;
-  left: 12px;
+  bottom: 100px;
+  right: 12px;
+  left: auto;
   z-index: 1201;
 }
 .compareDrawer {

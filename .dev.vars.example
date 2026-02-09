@@ -1,6 +1,0 @@
-# Copy this file to `.dev.vars` when running `npm run preview` locally.
-# DO NOT commit `.dev.vars`.
-
-ADMIN_PIN=1337
-SESSION_SECRET=change-this
-IMG_SECRET=change-this-too

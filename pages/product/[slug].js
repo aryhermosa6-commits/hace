@@ -16,6 +16,19 @@ import CouponVisual from "../../components/CouponVisual";
 import AutoCaption from "../../components/AutoCaption";
 import BeforeAfterSlider from "../../components/BeforeAfterSlider";
 
+  // detect mobile viewport to simplify heavy components like before/after slider
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const handleResize = () => {
+        setIsMobile(window.innerWidth < 768);
+      };
+      handleResize();
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }
+  }, []);
+
 export default function ProductPage({ __ctx }){
   const ctx=__ctx||{}; const data=ctx.data; const s=data?.settings||{};
   const router=useRouter(); const slug=String(router.query.slug||"");
@@ -119,14 +132,23 @@ export default function ProductPage({ __ctx }){
         <div style={{height:16}} />
         <Reveal><FitFinder chart={p.sizeChart} /></Reveal>
 
-        {/* Before/After slider comparing first two images */}
+        {/* Before/After comparison: on mobile, show images stacked; on larger screens, use slider */}
         <div style={{ height: 16 }} />
         <Reveal>
           {p.images && p.images.length > 1 && (
             <div className="card cardPad">
               <div className="h2" style={{ marginBottom: 8, fontSize: 18 }}>Before vs After</div>
-              <BeforeAfterSlider before={p.images[0]} after={p.images[1]} />
-              <div className="small" style={{ marginTop: 8 }}>Geser untuk melihat perbedaan.</div>
+              {isMobile ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <img src={p.images[0]} alt="Before" style={{ width: '100%', height: 240, objectFit: 'cover', borderRadius: 8 }} />
+                  <img src={p.images[1]} alt="After" style={{ width: '100%', height: 240, objectFit: 'cover', borderRadius: 8 }} />
+                </div>
+              ) : (
+                <>
+                  <BeforeAfterSlider before={p.images[0]} after={p.images[1]} />
+                  <div className="small" style={{ marginTop: 8 }}>Geser untuk melihat perbedaan.</div>
+                </>
+              )}
             </div>
           )}
         </Reveal>
