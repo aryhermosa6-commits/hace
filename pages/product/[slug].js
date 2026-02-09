@@ -15,20 +15,6 @@ import { signImageURL } from "../../lib/signedImg";
 import CouponVisual from "../../components/CouponVisual";
 import AutoCaption from "../../components/AutoCaption";
 import BeforeAfterSlider from "../../components/BeforeAfterSlider";
-
-  // detect mobile viewport to simplify heavy components like before/after slider
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const handleResize = () => {
-        setIsMobile(window.innerWidth < 768);
-      };
-      handleResize();
-      window.addEventListener('resize', handleResize);
-      return () => window.removeEventListener('resize', handleResize);
-    }
-  }, []);
-
 export default function ProductPage({ __ctx }){
   const ctx=__ctx||{}; const data=ctx.data; const s=data?.settings||{};
   const router=useRouter(); const slug=String(router.query.slug||"");
@@ -38,6 +24,16 @@ export default function ProductPage({ __ctx }){
   const [previewUrl,setPreviewUrl]=useState(null);
   const [qrOpen, setQrOpen] = useState(false);
   const [qrUrl, setQrUrl] = useState('');
+
+  // detect mobile viewport (MUST be inside component; hooks can't run at module scope)
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleResize = () => setIsMobile(window.innerWidth < 520);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   useEffect(()=>{ setVariant(getAB()); },[]);
 
   // record recently viewed product slugs in localStorage
