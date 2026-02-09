@@ -1,0 +1,19 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "main": ".open-next/worker.js",
+  "name": "hace",
+
+  // IMPORTANT: must not be in the future (Cloudflare uses UTC).
+  "compatibility_date": "2026-02-08",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+
+  // OpenNext uses this for internal fetches (revalidate, etc.)
+  "services": [
+    { "binding": "WORKER_SELF_REFERENCE", "service": "hace" }
+  ]
+}
