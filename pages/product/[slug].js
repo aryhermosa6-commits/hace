@@ -26,6 +26,7 @@ import CouponVisual from "../../components/CouponVisual";
 import AutoCaption from "../../components/AutoCaption";
 import BeforeAfterSlider from "../../components/BeforeAfterSlider";
 
+<<<<<<< HEAD
 export default function ProductPage({ ctx }){
   const router = useRouter();
   const slug = router.query.slug;
@@ -53,12 +54,49 @@ export default function ProductPage({ ctx }){
     }
   }, []);
 
+=======
+export default function ProductPage({ __ctx }){
+  const ctx=__ctx||{}; const data=ctx.data; const s=data?.settings||{};
+  const router=useRouter(); const slug=String(router.query.slug||"");
+  const p=useMemo(()=>data?.products?.find(x=>x.slug===slug),[data,slug]);
+  // detect mobile viewport to simplify heavy components like before/after slider
+  const [isMobile, setIsMobile] = useState(false);
+  const [gal,setGal]=useState(false); const [size,setSize]=useState(false);
+  const [variant,setVariant]=useState("A");
+  const [previewUrl,setPreviewUrl]=useState(null);
+  const [qrOpen, setQrOpen] = useState(false);
+  const [qrUrl, setQrUrl] = useState('');
+>>>>>>> a5918ce (v7.5 cloudflare build fix (toast + wishlist + no fs client))
   useEffect(()=>{ setVariant(getAB()); },[]);
   useEffect(()=>{
     setWish(isInWishlist(p?.slug));
   },[p?.slug]);
 
+<<<<<<< HEAD
   // sign image URL (deterrent only)
+=======
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // record recently viewed product slugs in localStorage
+  useEffect(() => {
+    if (!p) return;
+    try {
+      let arr = JSON.parse(localStorage.getItem('phc_recent') || '[]');
+      arr = arr.filter((s) => s !== p.slug);
+      arr.unshift(p.slug);
+      arr = arr.slice(0, 5);
+      localStorage.setItem('phc_recent', JSON.stringify(arr));
+    } catch (e) {}
+  }, [p?.slug]);
+
+  // Sign the first product image to prevent direct download
+>>>>>>> a5918ce (v7.5 cloudflare build fix (toast + wishlist + no fs client))
   useEffect(()=>{
     let alive=true;
     (async()=>{
