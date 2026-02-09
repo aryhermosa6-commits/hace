@@ -48,7 +48,9 @@ export default function ProductCard({ p, lang="id", onOpenGallery }){
   useEffect(()=>{ let alive=true; (async()=>{ try{ const u=await signImageURL(p.images?.[0]||""); if(alive) setSigUrl(u); }catch(e){} })(); return ()=>{alive=false}; },[p.images]);
   // sign back image separately so that preview uses signed URL
   useEffect(()=>{ let alive=true; (async()=>{ try{ const u=await signImageURL(p.images?.[1]||""); if(alive) setSigBack(u); }catch(e){} })(); return ()=>{alive=false}; },[p.images]);
-  const imgFront=sigUrl||p.images?.[0]; const imgBack=sigBack||p.images?.[1];
+  const imgFront = sigUrl || p.images?.[0];
+  // If no back image is available, fall back to the front image so the flip effect still shows something.
+  const imgBack = sigBack || p.images?.[1] || p.images?.[0];
 
   // init favourite state based on localStorage
   useEffect(() => {

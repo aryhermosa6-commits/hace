@@ -34,17 +34,7 @@ export default function HeaderNav({ ctx }){
         </Link>
         <ThemeLangBar lang={ctx.lang} setLang={ctx.setLang} theme={ctx.theme} setTheme={ctx.setTheme} themes={s.themes||["VHS","GRUNGE","CLEAN"]}/>
       </div>
-      <div className="row" style={{marginTop:12}}>
-        <Link className="btn small" href="/">{t.nav_home}</Link>
-        <Link className="btn small" href="/products">{t.nav_products}</Link>
-        <Link className="btn small" href="/wishlist">WISHLIST</Link>
-        <Link className="btn small" href="/admin">{t.nav_admin}</Link>
-        <Link className="btn small" href="/archive">ARCHIVE</Link>
-        <Link className="btn small" href="/products-table">TABLE</Link>
-        <Link className="btn small" href="/guide">GUIDE</Link>
-        <a className="btn small" href={`https://instagram.com/${s.igHandle||"ponorogohardcore"}`} target="_blank" rel="noreferrer">IG</a>
-      </div>
-      <hr />
+      {/* Navigation links removed to simplify header. Navigation is handled by the bottom nav. */}
     </div>
   );
 }

@@ -118,24 +118,8 @@ export default function Home({ __ctx }){
 
       <DropAlertPopup onCTA={()=> document.getElementById("drop-list")?.scrollIntoView({behavior:"smooth",block:"start"}) } />
 
+      {/* Removed the watermark preview form to reduce clutter. */}
       <div className="container">
-        <Reveal>
-          <div className="card cardPad">
-            <div className="row" style={{justifyContent:"space-between"}}>
-              <div>
-                <div className="h2 kinetic">WATERMARK (PREVIEW)</div>
-                <p className="p">Masukin handle IG kamu biar preview gallery ada watermark (anti-colong versi halus).</p>
-              </div>
-              <div className="badge">DYNAMIC</div>
-            </div>
-            <div className="row" style={{marginTop:10}}>
-              <input className="input" placeholder="@username" value={wm} onChange={(e)=>{ const v=e.target.value; setWm(v); try{ localStorage.setItem("phc_handle", v); }catch(e){} }} />
-              <div className="small">Dipakai buat watermark preview (overlay). Screenshot masih mungkin.</div>
-            </div>
-          </div>
-        </Reveal>
-
-        <div style={{height:16}} />
 
         <Reveal>
           <div className="row" style={{justifyContent:"space-between"}}>
@@ -164,12 +148,12 @@ export default function Home({ __ctx }){
           )}
         </Reveal>
 
-        <div style={{height:16}} />
+        <div style={{height:8}} />
         <Reveal><LookbookCarousel images={data.lookbook} /></Reveal>
         {/* Story strips below lookbook carousel */}
         <Reveal><StoryStrips images={data.lookbook} /></Reveal>
 
-        <div style={{height:16}} />
+        <div style={{height:8}} />
         <Reveal><BundleBuilder waNumber={s.waNumber} products={data.products} discount={s.bundleDiscount||10000} lang={ctx.lang} variant={variant} /></Reveal>
 
         <div style={{height:16}} />

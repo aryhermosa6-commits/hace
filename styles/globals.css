@@ -145,7 +145,8 @@ body.rage{animation: rageShake .45s infinite;filter: saturate(1.15) contrast(1.0
 .hero .content{position:relative;padding:26px;}
 .hero .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
 .hero .logo3d{width:52px;height:52px;border-radius:14px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);display:grid;place-items:center;transform-style:preserve-3d;animation: spinLogo 4s linear infinite;}
-@keyframes spinLogo{0%{transform:rotateY(0deg) rotateX(0deg);}100%{transform:rotateY(360deg) rotateX(360deg);}}
+/* deterministic clockwise spin (right) */
+@keyframes spinLogo{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
 .hero .logo3d img{width:34px;height:34px;filter:drop-shadow(0 8px 10px rgba(0,0,0,.7));}
 
 .tilt{transform: perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition: transform .12s ease;}
