@@ -1,4 +1,4 @@
-import { readJSON, writeJSON } from "../../../lib/storage";
+import { readJSON, writeJSON } from "../../../lib/storageServer";
 import { ipKey, rateLimit } from "../../../lib/ratelimit";
 export default function handler(req, res){
   if(req.method !== "POST") return res.status(405).json({ ok:false });

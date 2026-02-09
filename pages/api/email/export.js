@@ -1,4 +1,4 @@
-import { readJSON } from "../../../lib/storage";
+import { readJSON } from "../../../lib/storageServer";
 import { requireAdmin } from "../../../lib/auth";
 export default function handler(req, res){
   const ok=requireAdmin(req,res); if(!ok) return;

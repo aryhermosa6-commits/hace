@@ -1,4 +1,4 @@
-import { readJSON, writeJSON } from "../../../lib/storage";
+import { readJSON, writeJSON } from "../../../lib/storageServer";
 import { requireAdmin } from "../../../lib/auth";
 import { ipKey, rateLimit } from "../../../lib/ratelimit";
 export default function handler(req, res){
